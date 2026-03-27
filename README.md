@@ -25,7 +25,7 @@ The project is built as a monorepo consisting of:
 ### 1. Setup R2 Bucket
 First, you need to create the Cloudflare R2 bucket for storage.
 ```bash
-npx wrangler r2 bucket create bundle-sharing
+npx wrangler r2 bucket create parcel-data
 ```
 
 ### 2. Deploy the Worker

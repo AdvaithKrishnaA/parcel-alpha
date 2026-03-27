@@ -1,10 +1,19 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { generateId } from '@app/crypto';
+
+const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+function generateId(length: number = 10): string {
+  let id = "";
+  const randomBytes = new Uint8Array(length);
+  crypto.getRandomValues(randomBytes);
+  for (let i = 0; i < length; i++) {
+    id += BASE62[randomBytes[i] % 62];
+  }
+  return id;
+}
 
 type Bindings = {
-  BUCKET: R2Bucket;
-  DEFAULT_EXPIRY: number | string;
+  parcel_data: R2Bucket;
   MAX_BUNDLE_SIZE: number | string;
 };
 
@@ -31,11 +40,9 @@ app.post('/create', async (c) => {
     }
 
     const id = generateId(10);
-    const defaultExpiry = Number(c.env.DEFAULT_EXPIRY) || 604800000;
 
-    // Enforce expiry constraint
-    const expiryOffset = expires_in_ms ? Math.min(expires_in_ms, defaultExpiry) : defaultExpiry;
-    const expiresAt = Date.now() + expiryOffset;
+    // expires_in_ms: null means no expiry (never deleted)
+    const expiresAt = expires_in_ms != null ? Date.now() + expires_in_ms : null;
 
     const record = {
       id,
@@ -46,7 +53,7 @@ app.post('/create', async (c) => {
     };
 
     // Store in a single object in R2 per strict rule
-    await c.env.BUCKET.put(`share/${id}`, JSON.stringify(record));
+    await c.env.parcel_data.put(`share/${id}`, JSON.stringify(record));
 
     return c.json({ id });
   } catch (e) {
@@ -54,11 +61,22 @@ app.post('/create', async (c) => {
   }
 });
 
+// GET /sync/:user_id - load user state (must be before /:id)
+app.get('/sync/:user_id', async (c) => {
+  const userId = c.req.param('user_id');
+
+  const obj = await c.env.parcel_data.get(`sync/${userId}`);
+  if (!obj) return c.json({ error: 'Not found' }, 404);
+
+  const payload = await obj.text();
+  return c.text(payload, 200, { 'Content-Type': 'application/json' });
+});
+
 // GET /:id - get a shared bundle
 app.get('/:id', async (c) => {
   const id = c.req.param('id');
 
-  const obj = await c.env.BUCKET.get(`share/${id}`);
+  const obj = await c.env.parcel_data.get(`share/${id}`);
   if (!obj) return c.json({ error: 'Not found' }, 404);
 
   const text = await obj.text();
@@ -76,7 +94,7 @@ app.get('/:id', async (c) => {
 
   // Increment views
   record.views += 1;
-  await c.env.BUCKET.put(`share/${id}`, JSON.stringify(record));
+  await c.env.parcel_data.put(`share/${id}`, JSON.stringify(record));
 
   // Return just the payload portion, since that is what the client expects
   return c.json(record.payload, 200);
@@ -96,22 +114,11 @@ app.put('/sync', async (c) => {
     }
 
     // Conflict: last write wins, so we just overwrite the R2 object
-    await c.env.BUCKET.put(`sync/${user_id}`, payload);
+    await c.env.parcel_data.put(`sync/${user_id}`, payload);
     return c.json({ ok: true });
   } catch(e) {
     return c.json({ error: 'Invalid request' }, 400);
   }
-});
-
-// GET /sync/:user_id - load user state
-app.get('/sync/:user_id', async (c) => {
-  const userId = c.req.param('user_id');
-
-  const obj = await c.env.BUCKET.get(`sync/${userId}`);
-  if (!obj) return c.json({ error: 'Not found' }, 404);
-
-  const payload = await obj.text();
-  return c.text(payload, 200, { 'Content-Type': 'application/json' });
 });
 
 export default app;

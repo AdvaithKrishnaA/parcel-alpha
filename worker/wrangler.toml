@@ -1,11 +1,10 @@
-name = "bundle-sharing-worker"
+name = "parcel-worker"
 main = "src/index.ts"
 compatibility_date = "2024-03-20"
 
 [vars]
-DEFAULT_EXPIRY = 604800000 # 7 days in ms
 MAX_BUNDLE_SIZE = 102400 # 100KB
 
 [[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "bundle-sharing"
+binding = "parcel_data"
+bucket_name = "parcel-data"

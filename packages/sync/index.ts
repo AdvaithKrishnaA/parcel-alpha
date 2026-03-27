@@ -67,7 +67,7 @@ export class SyncClient {
     try {
       const response = await fetch(`${this.apiUrl}/sync/${this.userId}`);
       if (response.status === 404) {
-        return null;
+        return null; // No sync state yet, first time user
       }
       if (!response.ok) {
         throw new Error(`Failed to load sync state: ${response.statusText}`);
@@ -80,6 +80,9 @@ export class SyncClient {
       return JSON.parse(decryptedStr) as SyncState;
 
     } catch (e) {
+      if (e instanceof Error && e.message.includes('Failed to load')) {
+        throw e; // Re-throw real errors
+      }
       console.error("Sync load error:", e);
       return null;
     }

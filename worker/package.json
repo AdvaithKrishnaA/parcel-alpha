@@ -1,5 +1,5 @@
 {
-  "name": "worker",
+  "name": "parcel-worker",
   "version": "1.0.0",
   "main": "src/index.ts",
   "dependencies": {

@@ -18,7 +18,7 @@ export function ShareModal({ bundle }: ShareModalProps) {
   const [shareLink, setShareLink] = useState<string | null>(null);
 
   // Settings
-  const [expiresIn, setExpiresIn] = useState<number>(7 * 24 * 60 * 60 * 1000); // 7 days
+  const [expiresIn, setExpiresIn] = useState<number | null>(7 * 24 * 60 * 60 * 1000); // 7 days default
   const [maxViews, setMaxViews] = useState<number | null>(null);
   const [password, setPassword] = useState<string>('');
   const [usePassword, setUsePassword] = useState(false);
@@ -53,7 +53,7 @@ export function ShareModal({ bundle }: ShareModalProps) {
             iv: Array.from(encrypted.iv),
             ciphertext: Array.from(encrypted.ciphertext)
           },
-          expires_in_ms: expiresIn,
+          expires_in_ms: expiresIn, // null = no expiry
           max_views: maxViews
         })
       });
@@ -119,9 +119,10 @@ export function ShareModal({ bundle }: ShareModalProps) {
                 <select
                   id="expiry"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ml-4 max-w-[200px]"
-                  value={expiresIn}
-                  onChange={(e) => setExpiresIn(Number(e.target.value))}
+                  value={expiresIn ?? ''}
+                  onChange={(e) => setExpiresIn(e.target.value === '' ? null : Number(e.target.value))}
                 >
+                  <option value="">Never</option>
                   <option value={60 * 60 * 1000}>1 Hour</option>
                   <option value={24 * 60 * 60 * 1000}>1 Day</option>
                   <option value={7 * 24 * 60 * 60 * 1000}>7 Days</option>
