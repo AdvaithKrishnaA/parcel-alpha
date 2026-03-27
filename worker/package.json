@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "dependencies": {
-    "hono": "^4.0.0",
     "@app/crypto": "*",
-    "@app/types": "*"
+    "@app/types": "*",
+    "hono": "^4.0.0"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0",
-    "@cloudflare/workers-types": "^4.20240129.0"
+    "@cloudflare/workers-types": "^4.20240129.0",
+    "wrangler": "^4.78.0"
   }
 }
