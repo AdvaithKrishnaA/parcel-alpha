@@ -1,0 +1,9 @@
+{
+  "name": "@app/crypto",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "hash-wasm": "^4.11.0"
+  }
+}
